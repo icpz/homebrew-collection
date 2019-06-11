@@ -11,7 +11,7 @@ class WxpythonAT2 < Formula
   depends_on "libpng"
   depends_on "libtiff"
   depends_on "numpy"
-  depends_on "python"
+  depends_on "python@2"
 
   keg_only :versioned_formula
 
