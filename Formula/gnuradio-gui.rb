@@ -69,11 +69,13 @@ class GnuradioGui < Formula
 
   def install
     ENV.prepend_path "PATH", "#{Formula["python@2"].opt_frameworks}/Python.framework/Versions/2.7/bin"
+    ENV.prepend_path "PATH", "#{Formula["qt@4"].opt_bin}"
 
     ENV["CHEETAH_INSTALL_WITHOUT_SETUPTOOLS"] = "1"
     ENV["XML_CATALOG_FILES"] = etc/"xml/catalog"
     ENV.prepend_create_path "PYTHONPATH", libexec/"vendor/lib/python2.7/site-packages"
-    ENV.prepend_path "PYTHONPATH", "#{Formula["wxpython@2"].opt_prefix}/libexec/lib/python2.7/site-packages"
+    ENV.prepend_path "PYTHONPATH", "#{Formula["wxpython@2"].opt_libexec}/lib/python2.7/site-packages"
+    ENV.prepend_path "PYTHONPATH", "#{Formula["pyqt@4"].opt_lib}/lib/python2.7/site-packages"
 
     %w[Markdown Cheetah MarkupSafe Mako six].each do |r|
       resource(r).stage do
@@ -98,6 +100,10 @@ class GnuradioGui < Formula
       -DGR_PKG_CONF_DIR=#{etc}/gnuradio/conf.d
       -DGR_PREFSDIR=#{etc}/gnuradio/conf.d
       -DPYTHON_LIBRARY=#{Formula["python@2"].opt_frameworks}/Python.framework/Versions/2.7/lib/libpython2.7.dylib
+      -DQWT_LIBRARIES=#{Formula["qwt-qt4"].opt_lib}/qwt.framework/qwt
+      -DQWT_INCLUDE_DIRS=#{Formula["qwt-qt4"].opt_lib}/qwt.framework/Headers
+      -DCMAKE_CXX_FLAGS=-I#{Formula["qt@4"].opt_lib}/QtCore.framework/Headers\ -I#{Formula["qt@4"].opt_lib}/QtGui.framework/Headers
+      -DQT_BINARY_DIR=#{Formula["qt@4"].opt_bin}
       -DENABLE_DEFAULT=OFF
     ]
 
