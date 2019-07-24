@@ -23,6 +23,7 @@ class GnuradioGui < Formula
   depends_on "qt@4"
   depends_on "pyqt@4"
   depends_on "qwt-qt4"
+  depends_on "pygtk"
 
   # cheetah starts here
   resource "Markdown" do
