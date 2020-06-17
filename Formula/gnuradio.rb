@@ -3,8 +3,8 @@ class Gnuradio < Formula
 
   desc "SDK providing the signal processing runtime and processing blocks"
   homepage "https://gnuradio.org/"
-  url "https://gnuradio.org/releases/gnuradio/gnuradio-3.8.0.0.tar.gz"
-  sha256 "3a9c90111f22f2f6f30450731dc671ad28ce824fc1a7bc8ea0783da9b95a7092"
+  url "https://github.com/gnuradio/gnuradio/releases/download/v3.8.1.0/gnuradio-3.8.1.0.tar.gz"
+  sha256 "e15311e7da9fe2bb790cc36321d7eb2d93b9dfa0c1552fa5d534dd99d22873be"
   head "https://github.com/gnuradio/gnuradio.git"
 
   depends_on "cmake" => :build
@@ -21,7 +21,7 @@ class Gnuradio < Formula
   depends_on "pygobject3"
   depends_on "pygtk"
   depends_on "pyqt"
-  depends_on "python"
+  depends_on "python@3.8"
   depends_on "qt"
   depends_on "qwt"
   depends_on "uhd"
@@ -62,10 +62,12 @@ class Gnuradio < Formula
     sha256 "46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"
   end
 
+  patch :DATA
+
   def install
     ENV.cxx11
 
-    ENV.prepend_path "PATH", "#{Formula["qt"].opt_bin}"
+    ENV.prepend_path "PATH", "#{Formula["qt"].bin}"
 
     ENV["XML_CATALOG_FILES"] = etc/"xml/catalog"
 
@@ -86,10 +88,10 @@ class Gnuradio < Formula
       -DGR_PREFSDIR=#{etc}/gnuradio/conf.d
       -DPYTHON_EXECUTABLE=#{venv_root}/bin/python
       -DPYTHON_VERSION_MAJOR=3
-      -DQWT_LIBRARIES=#{Formula["qwt"].opt_lib}/qwt.framework/qwt
-      -DQWT_INCLUDE_DIRS=#{Formula["qwt"].opt_lib}/qwt.framework/Headers
-      -DCMAKE_PREFIX_PATH=#{Formula["qt"].opt_lib}
-      -DQT_BINARY_DIR=#{Formula["qt"].opt_bin}
+      -DQWT_LIBRARIES=#{Formula["qwt"].lib}/qwt.framework/qwt
+      -DQWT_INCLUDE_DIRS=#{Formula["qwt"].lib}/qwt.framework/Headers
+      -DCMAKE_PREFIX_PATH=#{Formula["qt"].lib}
+      -DQT_BINARY_DIR=#{Formula["qt"].bin}
       -DENABLE_DEFAULT=OFF
     ]
 
@@ -148,9 +150,9 @@ class Gnuradio < Formula
         top.run();
       }
     EOS
-    system ENV.cxx, "-std=c++11", "-L#{lib}", "-L#{Formula["boost"].opt_lib}",
+    system ENV.cxx, "-std=c++11", "-L#{lib}", "-L#{Formula["boost"].lib}",
            "-lgnuradio-blocks", "-lgnuradio-runtime", "-lgnuradio-pmt",
-           "-lboost_system", "-L#{Formula["log4cpp"].opt_lib}", "-llog4cpp",
+           "-lboost_system", "-L#{Formula["log4cpp"].lib}", "-llog4cpp",
            testpath/"test.c++", "-o", testpath/"test"
     system "./test"
 
@@ -188,3 +190,23 @@ class Gnuradio < Formula
     end
   end
 end
+
+__END__
+diff --git a/cmake/Modules/GrPython.cmake b/cmake/Modules/GrPython.cmake
+index fd9b7583a..388da7371 100644
+--- a/cmake/Modules/GrPython.cmake
++++ b/cmake/Modules/GrPython.cmake
+@@ -56,7 +56,12 @@ set(QA_PYTHON_EXECUTABLE ${QA_PYTHON_EXECUTABLE} CACHE FILEPATH "python interpre
+ add_library(Python::Python INTERFACE IMPORTED)
+ # Need to handle special cases where both debug and release
+ # libraries are available (in form of debug;A;optimized;B) in PYTHON_LIBRARIES
+-if(PYTHON_LIBRARY_DEBUG AND PYTHON_LIBRARY_RELEASE)
++if(APPLE)
++    set_target_properties(Python::Python PROPERTIES
++      INTERFACE_INCLUDE_DIRECTORIES "${PYTHON_INCLUDE_DIRS}"
++      INTERFACE_LINK_LIBRARIES "-undefined dynamic_lookup"
++      )
++elseif(PYTHON_LIBRARY_DEBUG AND PYTHON_LIBRARY_RELEASE)
+     set_target_properties(Python::Python PROPERTIES
+       INTERFACE_INCLUDE_DIRECTORIES "${PYTHON_INCLUDE_DIRS}"
+       INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PYTHON_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PYTHON_LIBRARY_DEBUG}>"
