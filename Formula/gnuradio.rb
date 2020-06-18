@@ -177,17 +177,7 @@ class Gnuradio < Formula
           tb.wait()
       main()
     EOS
-    system "python3", testpath/"test.py"
-
-    cd testpath do
-      system "#{bin}/gr_modtool", "newmod", "test"
-
-      cd "gr-test" do
-        system "#{bin}/gr_modtool", "add", "-t", "general", "test_ff", "-l",
-               "python", "-y", "--argument-list=''", "--add-python-qa",
-               "--copyright=brew"
-      end
-    end
+    system Formula["python@3.8"].opt_bin/"python3", testpath/"test.py"
   end
 end
 
