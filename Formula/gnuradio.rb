@@ -5,6 +5,7 @@ class Gnuradio < Formula
   homepage "https://gnuradio.org/"
   url "https://github.com/gnuradio/gnuradio/releases/download/v3.8.1.0/gnuradio-3.8.1.0.tar.gz"
   sha256 "e15311e7da9fe2bb790cc36321d7eb2d93b9dfa0c1552fa5d534dd99d22873be"
+  license "GPL-3.0"
   head "https://github.com/gnuradio/gnuradio.git"
 
   depends_on "cmake" => :build
@@ -13,6 +14,7 @@ class Gnuradio < Formula
   depends_on "swig" => :build
   depends_on "boost"
   depends_on "fftw"
+  depends_on "gmp"
   depends_on "gsl"
   depends_on "gtk+3"
   depends_on "log4cpp"
@@ -29,6 +31,16 @@ class Gnuradio < Formula
   resource "Cheetah" do
     url "https://files.pythonhosted.org/packages/4e/72/e6a7d92279e3551db1b68fd336fd7a6e3d2f2ec742bf486486e6150d77d2/Cheetah3-3.2.4.tar.gz"
     sha256 "caabb9c22961a3413ac85cd1e5525ec9ca80daeba6555f4f60802b6c256e252b"
+  end
+
+  resource "click" do
+    url "https://files.pythonhosted.org/packages/f8/5c/f60e9d8a1e77005f664b76ff8aeaee5bc05d0a91798afd7f53fc998dbc47/Click-7.0.tar.gz"
+    sha256 "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"
+  end
+
+  resource "click-plugins" do
+    url "https://files.pythonhosted.org/packages/5f/1d/45434f64ed749540af821fd7e42b8e4d23ac04b1eda7c26613288d6cd8a8/click-plugins-1.1.1.tar.gz"
+    sha256 "46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"
   end
 
   resource "Mako" do
@@ -51,33 +63,39 @@ class Gnuradio < Formula
     sha256 "964031c0944f913933f55ad1610938105a6657a69d1ac5a6dd50e16a679104d5"
   end
 
-  resource "click" do
-    url "https://files.pythonhosted.org/packages/f8/5c/f60e9d8a1e77005f664b76ff8aeaee5bc05d0a91798afd7f53fc998dbc47/Click-7.0.tar.gz"
-    sha256 "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"
+  # patch for boost 1.73.0, remove after next release
+  # https://github.com/gnuradio/gnuradio/pull/3566
+  patch do
+    url "https://github.com/gnuradio/gnuradio/commit/5752be31d17be80203d9fc44a73661712542bfe1.patch?full_index=1"
+    sha256 "8e50a04dbe12accd133a9db7d3bde6d704e805ae4f6acf734182608e306975d6"
   end
 
-  resource "click-plugins" do
-    url "https://files.pythonhosted.org/packages/5f/1d/45434f64ed749540af821fd7e42b8e4d23ac04b1eda7c26613288d6cd8a8/click-plugins-1.1.1.tar.gz"
-    sha256 "46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"
+  # Add -undefined dynamic_lookup linker flag back for macOS
+  # https://github.com/gnuradio/gnuradio/pull/3674
+  patch do
+    url "https://github.com/gnuradio/gnuradio/commit/80ba62cb11cf604495e87a5e302e68eaf441eea9.patch?full_index=1"
+    sha256 "d12640f62b266b244950d84f2deb1544f41574229106a525e693159fb3fc80eb"
   end
-
-  patch :DATA
 
   def install
     ENV.cxx11
-
-    ENV.prepend_path "PATH", "#{Formula["qt"].bin}"
+    ENV.prepend_path "PATH", Formula["qt"].opt_bin.to_s
 
     ENV["XML_CATALOG_FILES"] = etc/"xml/catalog"
 
     venv_root = libexec/"venv"
     xy = Language::Python.major_minor_version "python3"
     ENV.prepend_create_path "PYTHONPATH", "#{venv_root}/lib/python#{xy}/site-packages"
-
-    venv = virtualenv_create(venv_root, 'python3')
+    venv = virtualenv_create(venv_root, "python3")
 
     %w[Mako six Cheetah PyYAML click click-plugins].each do |r|
       venv.pip_install resource(r)
+    end
+
+    # Avoid references to the Homebrew shims directory
+    inreplace ["CMakeLists.txt", "volk/lib/CMakeLists.txt"] do |s|
+      s.gsub! "${CMAKE_C_COMPILER}", ENV.cc
+      s.gsub! "${CMAKE_CXX_COMPILER}", ENV.cxx
     end
 
     resource("cppzmq").stage include.to_s
@@ -85,20 +103,20 @@ class Gnuradio < Formula
     args = std_cmake_args + %W[
       -DGR_PKG_CONF_DIR=#{etc}/gnuradio/conf.d
       -DGR_PREFSDIR=#{etc}/gnuradio/conf.d
+      -DENABLE_DEFAULT=OFF
       -DPYTHON_EXECUTABLE=#{venv_root}/bin/python
       -DPYTHON_VERSION_MAJOR=3
       -DQWT_LIBRARIES=#{Formula["qwt"].lib}/qwt.framework/qwt
       -DQWT_INCLUDE_DIRS=#{Formula["qwt"].lib}/qwt.framework/Headers
-      -DCMAKE_PREFIX_PATH=#{Formula["qt"].lib}
-      -DQT_BINARY_DIR=#{Formula["qt"].bin}
-      -DENABLE_DEFAULT=OFF
+      -DCMAKE_PREFIX_PATH=#{Formula["qt"].opt_lib}
+      -DQT_BINARY_DIR=#{Formula["qt"].opt_bin}
+      -DENABLE_TESTING=OFF
     ]
 
-    enabled = %w[GR_ANALOG GR_FFT VOLK GR_FILTER GNURADIO_RUNTIME
-                 GR_BLOCKS GR_CHANNELS GR_AUDIO GR_VOCODER GR_FEC
-                 GR_DIGITAL GR_DTV GR_TRELLIS GR_ZEROMQ GR_MODTOOL
-                 GR_WAVELET GR_UHD PYTHON GR_UTILS GR_CTRLPORT GRC
-                 GR_QTGUI]
+    enabled = %w[GNURADIO_RUNTIME GR_ANALOG GR_AUDIO GR_BLOCKS GRC
+                 GR_CHANNELS GR_DIGITAL GR_DTV GR_FEC GR_FFT GR_FILTER
+                 GR_MODTOOL GR_QTGUI GR_TRELLIS GR_UHD GR_UTILS GR_VOCODER
+                 GR_WAVELET GR_ZEROMQ PYTHON VOLK]
     enabled.each do |c|
       args << "-DENABLE_#{c}=ON"
     end
@@ -120,7 +138,7 @@ class Gnuradio < Formula
   end
 
   test do
-    assert_match version.to_s, shell_output("#{bin}/gnuradio-config-info -v") if not build.head?
+    assert_match version.to_s, shell_output("#{bin}/gnuradio-config-info -v")
 
     (testpath/"test.c++").write <<~EOS
       #include <gnuradio/top_block.h>
@@ -128,6 +146,7 @@ class Gnuradio < Formula
       #include <gnuradio/blocks/null_sink.h>
       #include <gnuradio/blocks/head.h>
       #include <gnuradio/gr_complex.h>
+
       class top_block : public gr::top_block {
       public:
         top_block();
@@ -136,6 +155,7 @@ class Gnuradio < Formula
         gr::blocks::null_sink::sptr null_sink;
         gr::blocks::head::sptr head;
       };
+
       top_block::top_block() : gr::top_block("Top block") {
         long s = sizeof(gr_complex);
         null_source = gr::blocks::null_source::make(s);
@@ -144,20 +164,22 @@ class Gnuradio < Formula
         connect(null_source, 0, head, 0);
         connect(head, 0, null_sink, 0);
       }
+
       int main(int argc, char **argv) {
         top_block top;
         top.run();
       }
     EOS
-    system ENV.cxx, "-std=c++11", "-L#{lib}", "-L#{Formula["boost"].lib}",
+    system ENV.cxx, "-std=c++11", "-L#{lib}", "-L#{Formula["boost"].opt_lib}",
            "-lgnuradio-blocks", "-lgnuradio-runtime", "-lgnuradio-pmt",
-           "-lboost_system", "-L#{Formula["log4cpp"].lib}", "-llog4cpp",
-           testpath/"test.c++", "-o", testpath/"test"
+           "-lboost_system", "-L#{Formula["log4cpp"].opt_lib}", "-llog4cpp",
+            testpath/"test.c++", "-o", testpath/"test"
     system "./test"
 
     (testpath/"test.py").write <<~EOS
       from gnuradio import blocks
       from gnuradio import gr
+
       class top_block(gr.top_block):
           def __init__(self):
               gr.top_block.__init__(self, "Top Block")
@@ -170,32 +192,14 @@ class Gnuradio < Formula
                            (self.blocks_null_sink_0, 0))
               self.connect((self.blocks_null_source_0, 0),
                            (self.blocks_head_0, 0))
+
       def main(top_block_cls=top_block, options=None):
           tb = top_block_cls()
           tb.start()
           tb.wait()
+
       main()
     EOS
-    system Formula["python@3.8"].opt_bin/"python3", testpath/"test.py"
+    system "python3", testpath/"test.py"
   end
 end
-
-__END__
-diff --git a/cmake/Modules/GrPython.cmake b/cmake/Modules/GrPython.cmake
-index fd9b7583a..388da7371 100644
---- a/cmake/Modules/GrPython.cmake
-+++ b/cmake/Modules/GrPython.cmake
-@@ -56,7 +56,12 @@ set(QA_PYTHON_EXECUTABLE ${QA_PYTHON_EXECUTABLE} CACHE FILEPATH "python interpre
- add_library(Python::Python INTERFACE IMPORTED)
- # Need to handle special cases where both debug and release
- # libraries are available (in form of debug;A;optimized;B) in PYTHON_LIBRARIES
--if(PYTHON_LIBRARY_DEBUG AND PYTHON_LIBRARY_RELEASE)
-+if(APPLE)
-+    set_target_properties(Python::Python PROPERTIES
-+      INTERFACE_INCLUDE_DIRECTORIES "${PYTHON_INCLUDE_DIRS}"
-+      INTERFACE_LINK_LIBRARIES "-undefined dynamic_lookup"
-+      )
-+elseif(PYTHON_LIBRARY_DEBUG AND PYTHON_LIBRARY_RELEASE)
-     set_target_properties(Python::Python PROPERTIES
-       INTERFACE_INCLUDE_DIRECTORIES "${PYTHON_INCLUDE_DIRS}"
-       INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PYTHON_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PYTHON_LIBRARY_DEBUG}>"
