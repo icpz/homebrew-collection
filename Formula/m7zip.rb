@@ -4,6 +4,7 @@ class M7zip < Formula
   url "https://7-zip.org/a/7z2102-src.7z"
   version "21.02a"
   sha256 "ee9755feaa034e7075712bc6b1fad25440bd0a8f21f106a16e37bc4b409f1122"
+  license all_of: ["LGPL-2.1-or-later", "BSD-3-Clause"]
 
   def install
     cd "CPP/7zip/Bundles/Alone2" do
@@ -12,5 +13,12 @@ class M7zip < Formula
 
       bin.install "b/m_" + suffix + "/7zz"
     end
+  end
+
+  test do
+    (testpath/"foo.txt").write("hello world!\n")
+    system bin/"7zz", "a", "-t7z", "foo.7z", "foo.txt"
+    system bin/"7zz", "e", "foo.7z", "-oout"
+    assert_equal "hello world!\n", File.read(testpath/"out/foo.txt")
   end
 end
