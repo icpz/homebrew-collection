@@ -1,6 +1,6 @@
 cask "wechattweak-cli" do
-  version "integrated"
-  sha256 "f505632dd00c7a751804f723e9f1cb89ec321b43350a20d24205d62aa4eb7eb4"
+  version "1.2i"
+  sha256 "8a3275a8b3bce9006cc125fd92bfab02082441e46206dc3bbd1b067716854942"
   url "https://github.com/icpz/WeChatTweak-CLI/releases/download/#{version}/wechattweak-cli"
 
   name "WeChatTweak-CLI"
