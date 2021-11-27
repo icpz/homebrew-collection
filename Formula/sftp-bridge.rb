@@ -7,7 +7,7 @@ class SftpBridge < Formula
   depends_on "go" => :build
 
   def install
-    system "go", "build", "-ldflags", "-s -w -X github.com/icpz/sftp-bridge/common.DefaultConfigFile=#{etc/"sftp-bridge.json"} -X github.com/icpz/sftp-bridge/common.Version=#{version}", "-trimpath", "-o", "build/sftp-bridge"
+    system "go", "build", "-ldflags", "-s -w -X github.com/icpz/sftp-bridge/common.DefaultConfigFile=#{etc/"sftp-bridge.json"} -X github.com/icpz/sftp-bridge/common.Version=v#{version}", "-trimpath", "-o", "build/sftp-bridge"
     (buildpath/"build/sftp-bridge.json").write <<~EOS
       {
         "instances": [
