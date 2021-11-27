@@ -2,12 +2,12 @@ class SftpBridge < Formula
   desc "command-line utility to bridge sftp behind a jump server"
   homepage "https://github.com/icpz/sftp-bridge"
   url "https://github.com/icpz/sftp-bridge/archive/v0.2.tar.gz"
-  sha256 "f11390cb07343fab211490b91064b0939c3920aa14221fd2cc6e2819f129a4ba"
+  sha256 "1fe6b8bb2ba9c3bcc415fe83c5278f0244ab8829c04d0cc3fdbda133ce4e009a"
 
   depends_on "go" => :build
 
   def install
-    system "go", "build", "-ldflags", "-s -w -X github.com/icpz/sftp-bridge/common.DefaultConfigFile=#{etc/"sftp-bridge.json"}", "-trimpath", "-o", "build/sftp-bridge"
+    system "go", "build", "-ldflags", "-s -w -X github.com/icpz/sftp-bridge/common.DefaultConfigFile=#{etc/"sftp-bridge.json"} -X github.com/icpz/sftp-bridge/common.Version=#{version}", "-trimpath", "-o", "build/sftp-bridge"
     (buildpath/"build/sftp-bridge.json").write <<~EOS
       {
         "instances": [
