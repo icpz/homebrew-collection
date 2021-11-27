@@ -1,8 +1,8 @@
 class SftpBridge < Formula
   desc "command-line utility to bridge sftp behind a jump server"
   homepage "https://github.com/icpz/sftp-bridge"
-  url "https://github.com/icpz/sftp-bridge/archive/v0.1.1.tar.gz"
-  sha256 "f455eda62e1a0e126cc6baedc3e6a6add7d5edfe96120693cde2aafa0f5b24f7"
+  url "https://github.com/icpz/sftp-bridge/archive/v0.2.tar.gz"
+  sha256 "f11390cb07343fab211490b91064b0939c3920aa14221fd2cc6e2819f129a4ba"
 
   depends_on "go" => :build
 
