@@ -4,7 +4,7 @@ class Bclm < Formula
   url "https://github.com/zackelia/bclm/archive/v0.0.2.tar.gz"
   sha256 "47a4587ae329b5ce0f07a47e341d41501f1c35f2b38346d5b07e1b486955959f"
   license "https://github.com/zackelia/bclm/blob/master/LICENSE"
-  head "https://github.com/zackelia/bclm"
+  head "https://github.com/zackelia/bclm.git"
 
   depends_on xcode: "11.1"
 
