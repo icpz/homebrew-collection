@@ -5,11 +5,12 @@ class Umoci < Formula
   head "https://github.com/opencontainers/umoci.git", branch: "main"
 
   depends_on "go" => :build
+  depends_on "go-md2man" => :build
 
   def install
-    system "make", "umoci.static"
-    mv "umoci.static", "umoci"
+    system "make", "umoci.static", "docs"
 
-    bin.install "umoci"
+    bin.install "umoci.static" => "umoci"
+    man1.install Dir["doc/man/*.1"]
   end
 end
