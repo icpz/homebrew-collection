@@ -5,11 +5,13 @@ class ReresolveWireguardDns < Formula
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   version "1.0"
 
+  depends_on "bash"
+
   keg_only "no export"
 
   resource "reresolve-dns" do
-    url "https://gist.githubusercontent.com/icpz/d33a888eed84c76dd59e33a85cc8f1d6/raw/8c8d4b138564fc42b2004b2347e3c4fa70e984a4/reresolve-dns-darwin.sh"
-    sha256 "675aba5c78119db025d1a13b850a597b7491cbcdf37846250acf0544f8228838"
+    url "https://gist.githubusercontent.com/icpz/d33a888eed84c76dd59e33a85cc8f1d6/raw/431ca1dffd2ef5b1a9176b0934c3f53d6a2ef17f/reresolve-dns-darwin.sh"
+    sha256 "d463e5c836c55453b29ecd00af003a56d08ec935c0dfc828a2b323c542f5406c"
   end
 
   resource "reresolve-wireguard-dns" do
@@ -30,6 +32,7 @@ class ReresolveWireguardDns < Formula
     run_type :interval
     interval 180
     environment_variables WG_CONF_DIR: etc/"wireguard",
-                          WG_RRDNS:    opt_bin/"reresolve-dns"
+                          WG_RRDNS:    opt_bin/"reresolve-dns",
+                          PATH:        std_service_path_env
   end
 end
